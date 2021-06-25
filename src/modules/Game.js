@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import Board from './Board';
 
 class Game extends React.Component {
@@ -7,6 +8,8 @@ class Game extends React.Component {
         this.state = {
             history: [{
                 squares: Array(9).fill(null),
+                row: null,
+                col: null
             }],
             stepNumber: 0,
             xIsNext: true,
@@ -18,6 +21,9 @@ class Game extends React.Component {
         const current = history[history.length - 1];
         const squares = current.squares.slice();
 
+        const row = Math.floor(i / 3);
+        const col = i % 3;
+
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
@@ -26,6 +32,8 @@ class Game extends React.Component {
         this.setState({
             history: history.concat([{
                 squares: squares,
+                row: row,
+                col: col
             }]),
             stepNumber: history.length,
             xIsNext: !this.state.xIsNext,
@@ -44,13 +52,20 @@ class Game extends React.Component {
         const current = history[this.state.stepNumber];
         const winner = calculateWinner(current.squares);
 
-        const moves = history.map((step, move) => {
+        const moves = history.map((element, move) => {
             const desc = move ?
-                'Go to move #' + move :
+                `Go to move # ${move} (col: ${element.col}, row: ${element.row})` :
                 'Go to game start';
+
+            const isCurMove = this.state.stepNumber === move;
+
             return (
-                <li key={move}>
-                    <button onClick={() => this.jumpTo(move)}>{desc}</button>
+                <li key={uuidv4()}>
+                    <button
+                        style={{ fontWeight: isCurMove ? 'bold' : 'normal' }}
+                        onClick={() => this.jumpTo(move)}>
+                        {desc}
+                    </button>
                 </li>
             );
         });
