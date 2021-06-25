@@ -8,74 +8,115 @@ class Game extends React.Component {
         this.state = {
             history: [{
                 squares: Array(9).fill(null),
+                moveNumber: 0,
                 row: null,
                 col: null
             }],
-            stepNumber: 0,
+            displayedMoveIndex: 0,
             xIsNext: true,
+            isSortAsc: true
         };
     }
 
     handleClick(i) {
-        const history = this.state.history.slice(0, this.state.stepNumber + 1);
-        const current = history[history.length - 1];
-        const squares = current.squares.slice();
+        let displayedMoveIndex = this.state.displayedMoveIndex;
 
-        const row = Math.floor(i / 3);
-        const col = i % 3;
+        const history = this.state.history.slice();
+        const current = history[displayedMoveIndex];
+        const squares = current.squares.slice();
 
         if (calculateWinner(squares) || squares[i]) {
             return;
         }
 
         squares[i] = this.state.xIsNext ? 'X' : 'O';
+
+        const newHistoryEntry = {
+            squares: squares,
+            moveNumber: current.moveNumber + 1,
+            row: Math.floor(i / 3),
+            col: i % 3
+        };
+
+        for (let i = 0; i < history.length; i++) {
+            // Check if history entries need to be removed
+            if (history[i].moveNumber === newHistoryEntry.moveNumber) {
+                if (this.state.isSortAsc) {
+                    // Delete history entries from end of array
+                    history.splice(i);
+                    break;
+                } else {
+                    // Delete history entries from start of array
+                    history.splice(0, i + 1);
+                    break;
+                }
+            }
+        }
+
+        // Add new history entry to start or end of array
+        if (this.state.isSortAsc) {
+            history.push(newHistoryEntry)
+            displayedMoveIndex = history.length - 1;
+        } else {
+            history.unshift(newHistoryEntry);
+            displayedMoveIndex = 0;
+        }
+
         this.setState({
-            history: history.concat([{
-                squares: squares,
-                row: row,
-                col: col
-            }]),
-            stepNumber: history.length,
-            xIsNext: !this.state.xIsNext,
+            history: history,
+            displayedMoveIndex: displayedMoveIndex,
+            xIsNext: !this.state.xIsNext
         });
     }
 
     jumpTo(step) {
         this.setState({
-            stepNumber: step,
+            displayedMoveIndex: step,
             xIsNext: (step % 2) === 0,
         });
     }
 
+    handleSort() {
+        const history = this.state.history;
+        const totalMoveCount = history.length - 1;
+
+        this.setState({
+            history: history.slice().reverse(),
+            displayedMoveIndex: totalMoveCount - this.state.displayedMoveIndex,
+            isSortAsc: !this.state.isSortAsc
+        })
+    }
+
     render() {
         const history = this.state.history;
-        const current = history[this.state.stepNumber];
+        const displayedMoveIndex = this.state.displayedMoveIndex
+        const current = history[displayedMoveIndex];
         const winner = calculateWinner(current.squares);
 
-        const moves = history.map((element, move) => {
-            const desc = move ?
-                `Go to move # ${move} (col: ${element.col}, row: ${element.row})` :
-                'Go to game start';
+        console.log(history);
 
-            const isCurMove = this.state.stepNumber === move;
+        const moves = history.map((arrElement, arrIndex) => {
+            const moveNumber = arrElement.moveNumber;
+            const isDisplayedMove = displayedMoveIndex === arrIndex;
+
+            const desc = moveNumber === 0 ?
+                'Go to game start' :
+                `Go to move # ${moveNumber} (col: ${arrElement.col}, row: ${arrElement.row})`;
 
             return (
-                <li key={uuidv4()}>
+                <ul key={uuidv4()}>
                     <button
-                        style={{ fontWeight: isCurMove ? 'bold' : 'normal' }}
-                        onClick={() => this.jumpTo(move)}>
+                        style={{ fontWeight: isDisplayedMove ? 'bold' : 'normal' }}
+                        onClick={() => this.jumpTo(arrIndex)}>
                         {desc}
                     </button>
-                </li>
+                </ul>
             );
         });
 
-        let status;
-        if (winner) {
-            status = 'Winner: ' + winner;
-        } else {
-            status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-        }
+        const nextPlayer = this.state.xIsNext ? 'X' : 'O';
+        const status = winner ? 'Winner: ' + winner : 'Next player: ' + nextPlayer;
+        const sortBtnText = this.state.isSortAsc ? 'Sort Moves Desc' : 'Sort Moves Asc';
 
         return (
             <div className="game">
@@ -87,6 +128,7 @@ class Game extends React.Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
+                    <button onClick={() => this.handleSort()}>{sortBtnText}</button>
                     <ol>{moves}</ol>
                 </div>
             </div>
