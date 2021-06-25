@@ -36,15 +36,20 @@ class Game extends React.Component {
         squares[i] = this.state.xIsNext ? 'X' : 'O';
 
         // Check if player won
-        const winningSquares = calculateWinner(squares);
+        const winningSquares = isGameWon(squares);
         if (winningSquares) {
             console.log("GAME OVER!");
 
             this.setState({
                 isGameOver: true,
-                winner: winningSquares[0],
+                winner: squares[i],
                 winningSquares: winningSquares
             });
+        // Check if game is a draw
+        } else if (isGameDraw(squares)) {
+            this.setState({
+                isGameOver: true
+            })
         }
 
         const newHistoryEntry = {
@@ -128,8 +133,15 @@ class Game extends React.Component {
         });
 
         const nextPlayer = this.state.xIsNext ? 'X' : 'O';
-        const status = this.state.isGameOver ? 'Winner: ' + this.state.winner : 'Next player: ' + nextPlayer;
         const sortBtnText = this.state.isSortAsc ? 'Sort Moves Desc' : 'Sort Moves Asc';
+
+        let status;
+        if(this.state.isGameOver) {
+            const winner = this.state.winner;
+            status = winner ? 'Winner: ' + winner : `It's a DRAW!`
+        } else {
+            status = 'Next player: ' + nextPlayer;
+        }
 
         return (
             <div className="game">
@@ -150,7 +162,7 @@ class Game extends React.Component {
     }
 }
 
-function calculateWinner(squares) {
+function isGameWon(squares) {
     const lines = [
         [0, 1, 2],
         [3, 4, 5],
@@ -170,6 +182,10 @@ function calculateWinner(squares) {
     }
 
     return null;
+}
+
+function isGameDraw(squares) {
+    return !squares.includes(null);
 }
 
 export default Game;
