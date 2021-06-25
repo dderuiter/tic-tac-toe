@@ -14,7 +14,10 @@ class Game extends React.Component {
             }],
             displayedMoveIndex: 0,
             xIsNext: true,
-            isSortAsc: true
+            isSortAsc: true,
+            isGameOver: false,
+            winner: null,
+            winningSquares: Array(3).fill(null)
         };
     }
 
@@ -25,11 +28,24 @@ class Game extends React.Component {
         const current = history[displayedMoveIndex];
         const squares = current.squares.slice();
 
-        if (calculateWinner(squares) || squares[i]) {
+        // Check if game is over or square already contains a value
+        if (this.state.isGameOver || squares[i]) {
             return;
         }
 
         squares[i] = this.state.xIsNext ? 'X' : 'O';
+
+        // Check if player won
+        const winningSquares = calculateWinner(squares);
+        if (winningSquares) {
+            console.log("GAME OVER!");
+
+            this.setState({
+                isGameOver: true,
+                winner: winningSquares[0],
+                winningSquares: winningSquares
+            });
+        }
 
         const newHistoryEntry = {
             squares: squares,
@@ -91,9 +107,6 @@ class Game extends React.Component {
         const history = this.state.history;
         const displayedMoveIndex = this.state.displayedMoveIndex
         const current = history[displayedMoveIndex];
-        const winner = calculateWinner(current.squares);
-
-        console.log(history);
 
         const moves = history.map((arrElement, arrIndex) => {
             const moveNumber = arrElement.moveNumber;
@@ -101,7 +114,7 @@ class Game extends React.Component {
 
             const desc = moveNumber === 0 ?
                 'Go to game start' :
-                `Go to move # ${moveNumber} (col: ${arrElement.col}, row: ${arrElement.row})`;
+                `Go to move #${moveNumber} (col: ${arrElement.col}, row: ${arrElement.row})`;
 
             return (
                 <ul key={uuidv4()}>
@@ -115,7 +128,7 @@ class Game extends React.Component {
         });
 
         const nextPlayer = this.state.xIsNext ? 'X' : 'O';
-        const status = winner ? 'Winner: ' + winner : 'Next player: ' + nextPlayer;
+        const status = this.state.isGameOver ? 'Winner: ' + this.state.winner : 'Next player: ' + nextPlayer;
         const sortBtnText = this.state.isSortAsc ? 'Sort Moves Desc' : 'Sort Moves Asc';
 
         return (
@@ -123,6 +136,7 @@ class Game extends React.Component {
                 <div className="game-board">
                     <Board
                         squares={current.squares}
+                        winningSquares={this.state.winningSquares}
                         onClick={(i) => this.handleClick(i)}
                     />
                 </div>
@@ -151,7 +165,7 @@ function calculateWinner(squares) {
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
+            return lines[i];
         }
     }
 

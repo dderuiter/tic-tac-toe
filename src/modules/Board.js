@@ -18,6 +18,7 @@ class Board extends React.Component {
                 <Row
                     key={uuidv4()}
                     squares={this.props.squares}
+                    winningSquares={this.props.winningSquares}
                     row={row}
                     rowCount={this.rowCount}
                     colCount={this.colCount}
